@@ -21,12 +21,13 @@ public class TaskProcess{
     private int id;
     private String result;
 
-    public TaskProcess(int x, Function<Integer, Optional<Optional<String>>> function) {
-        this.x = x;
+    public TaskProcess(Function<Integer, Optional<Optional<String>>> function) {
+        //this.x = x;
         id = nextId++;
         this.function = function;
         try {
             clientSocket = new Socket("localhost", 2222);
+            System.out.println("clint was created");
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         } catch (IOException e) {
@@ -38,23 +39,17 @@ public class TaskProcess{
         return result;
     }
     public void run(){
-        System.out.println(clientSocket.getInetAddress().getHostName() + " connected");
+        System.out.println(clientSocket.getInetAddress().getHostName() + id + " connected");
 //        if(clientSocket.isClosed())
 //        {
 //            System.out.println("id- " + id);
 //        }
-//        final String[] input = new String[1];
-//        Thread read = new Thread(() -> {
-//            while(true){
-//                try{
-//                    String obj = in.readLine();
-//                    input[0] = obj;
-//                    System.out.println(obj);
-//                    break;
-//                }
-//                catch(IOException e){ e.printStackTrace(); }
-//            }
-//        });
+        try {
+            x = Integer.parseInt(in.readLine());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("x is " + x +" id is " + id);
 //
 //        read.setDaemon(true);
 //        read.start();

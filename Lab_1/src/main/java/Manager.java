@@ -14,22 +14,41 @@ public class Manager {
     private Function<Integer, Optional<Optional<String>>> f;
     private Function<Integer, Optional<Optional<String>>> g;
 
-    private ServerSocket serverSocket = null;
-    private Socket clientSocket = null;
-    private PrintWriter out;
-    private BufferedReader in;
+    private Socket clientSocketF = null;
+    private Socket clientSocketG = null;
     private TaskProcess taskG = null;
     private TaskProcess taskF = null;
     //private int x;
 
     public Manager() {
         //System.out.println("26");
+        f = (x) ->{
+            try {
+                return Concatenation.trialF(x);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        g = (x) ->{
+            try {
+                return Concatenation.trialG(x);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        };
 
         try {
-            serverSocket = new ServerSocket(2222);
-            clientSocket = serverSocket.accept();
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            ServerSocket serverSocket = new ServerSocket(2222);
+            System.out.println("server socket was created");
+
+            taskF = new TaskProcess(f);
+            taskG = new TaskProcess(g);
+
+
+            clientSocketF = serverSocket.accept();
+            clientSocketG = serverSocket.accept();
+
+            System.out.println("client sockets was initialized");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -57,32 +76,36 @@ public class Manager {
         ));
         //System.out.println("55");
 
-        f = (x) ->{
-            try {
-                return Concatenation.trialF(x);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        };
-        g = (x) ->{
-            try {
-                return Concatenation.trialG(x);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        };
+
         //System.out.println("ss");
     }
+    private void sendX(int x, Socket clientSocket){
+        try {
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            out.println(x);
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    }
+    private String recvResult(){
+        return null;
+    }
+
     public void run(){
         System.out.println("Enter x: ");
         Scanner scannerMain = new Scanner(System.in);
         final int x = scannerMain.nextInt();
+        sendX(x, clientSocketF);
+        sendX(x, clientSocketG);
         Thread cancel = new Thread(getCancellationRunnable());
         cancel.start();
         //getCancellationRunnable().run();
         //System.out.println("eee");
         CompletableFuture<String> fTask = CompletableFuture.supplyAsync(() -> {
-            taskF = new TaskProcess(x, f);
+
             taskF.run();
             //System.out.println(taskF.getResult());
 
@@ -90,7 +113,7 @@ public class Manager {
             //return taskF.run();
         });
         CompletableFuture<String> gTask = CompletableFuture.supplyAsync(() -> {
-            taskG = new TaskProcess(x, g);
+
             taskG.run();
             return taskG.getResult();//f.apply(x).get();
             //return taskG.run();
