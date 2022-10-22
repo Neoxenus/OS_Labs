@@ -83,15 +83,23 @@ public class Manager {
         try {
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             out.println(x);
-            out.close();
+            //out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        //in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
     }
-    private String recvResult(){
-        return null;
+    private String recvResult(Socket clientSocket){
+        String result = null;
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            result = in.readLine();
+            //in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     public void run(){
@@ -109,18 +117,19 @@ public class Manager {
             taskF.run();
             //System.out.println(taskF.getResult());
 
-            return taskF.getResult();//f.apply(x).get();
+            //return taskF.getResult();//f.apply(x).get();
+            return recvResult(clientSocketF);
             //return taskF.run();
         });
         CompletableFuture<String> gTask = CompletableFuture.supplyAsync(() -> {
 
             taskG.run();
-            return taskG.getResult();//f.apply(x).get();
+            //return taskG.getResult();//f.apply(x).get();
+            return recvResult(clientSocketG);
             //return taskG.run();
         });
 
         CompletableFuture<String> result = fTask.thenCombine(gTask, (f , g)-> f + g);
-        //System.out.println("qqq");
         try {
             System.out.println(result.get());
         } catch (InterruptedException | ExecutionException e) {

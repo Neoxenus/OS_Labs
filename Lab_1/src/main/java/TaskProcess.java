@@ -17,12 +17,13 @@ public class TaskProcess{
     private Socket clientSocket = null;
     private PrintWriter out = null;
     private BufferedReader in = null;
+
     private static int nextId = 0;
     private int id;
+
     private String result;
 
     public TaskProcess(Function<Integer, Optional<Optional<String>>> function) {
-        //this.x = x;
         id = nextId++;
         this.function = function;
         try {
@@ -33,33 +34,18 @@ public class TaskProcess{
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //this.socket = socket;
     }
     public String getResult(){
         return result;
     }
     public void run(){
         System.out.println(clientSocket.getInetAddress().getHostName() + id + " connected");
-//        if(clientSocket.isClosed())
-//        {
-//            System.out.println("id- " + id);
-//        }
         try {
             x = Integer.parseInt(in.readLine());
         } catch (IOException e) {
             e.printStackTrace();
         }
         System.out.println("x is " + x +" id is " + id);
-//
-//        read.setDaemon(true);
-//        read.start();
-//        try {
-//            read.join();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-        //System.out.println("X was received, id: " + id + " "+ input[0]);
-        //x = Integer.parseInt(input[0]);
         try {
             Optional<Optional<String>> softOptional = Optional.empty();
 
@@ -69,7 +55,6 @@ public class TaskProcess{
                     break;
                 }
             }
-            //System.out.println("sss");
             if (softOptional.isPresent()){
                 Optional<String> hardOptional = softOptional.get();
                 if(hardOptional.isPresent()){
@@ -86,7 +71,8 @@ public class TaskProcess{
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
-        //System.out.println("end");
-        //return result;
+
+        //sending result
+        out.println(result);
     }
 }
