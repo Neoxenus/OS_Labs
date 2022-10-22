@@ -1,7 +1,11 @@
 import os.lab1.compfuncs.advanced.Concatenation;
-import os.lab1.compfuncs.advanced.DoubleOps;
 
-import java.io.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Optional;
@@ -11,8 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 public class Manager {
-    private Function<Integer, Optional<Optional<String>>> f;
-    private Function<Integer, Optional<Optional<String>>> g;
 
     private Socket clientSocketF = null;
     private Socket clientSocketG = null;
@@ -22,14 +24,14 @@ public class Manager {
 
     public Manager() {
         //System.out.println("26");
-        f = (x) ->{
+        Function<Integer, Optional<Optional<String>>> f = (x) -> {
             try {
                 return Concatenation.trialF(x);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         };
-        g = (x) ->{
+        Function<Integer, Optional<Optional<String>>> g = (x) -> {
             try {
                 return Concatenation.trialG(x);
             } catch (InterruptedException e) {
@@ -57,7 +59,7 @@ public class Manager {
         Runtime current = Runtime.getRuntime();
         current.addShutdownHook(new Thread(()->{
 
-                System.out.println("Computations cancelled:");
+                //System.out.println("Computations cancelled:");
             switch (taskF.getResult()) {
                 case null -> System.out.println("f(x) - not finished");
                 case "$$SoftFail" -> System.out.println("f(x) - soft fail");
@@ -74,10 +76,8 @@ public class Manager {
 
         }
         ));
-        //System.out.println("55");
 
 
-        //System.out.println("ss");
     }
     private void sendX(int x, Socket clientSocket){
         try {
@@ -109,24 +109,15 @@ public class Manager {
         sendX(x, clientSocketF);
         sendX(x, clientSocketG);
         Thread cancel = new Thread(getCancellationRunnable());
+        cancel.setDaemon(true);
         cancel.start();
-        //getCancellationRunnable().run();
-        //System.out.println("eee");
         CompletableFuture<String> fTask = CompletableFuture.supplyAsync(() -> {
-
             taskF.run();
-            //System.out.println(taskF.getResult());
-
-            //return taskF.getResult();//f.apply(x).get();
             return recvResult(clientSocketF);
-            //return taskF.run();
         });
         CompletableFuture<String> gTask = CompletableFuture.supplyAsync(() -> {
-
             taskG.run();
-            //return taskG.getResult();//f.apply(x).get();
             return recvResult(clientSocketG);
-            //return taskG.run();
         });
 
         CompletableFuture<String> result = fTask.thenCombine(gTask, (f , g)-> f + g);
@@ -139,12 +130,20 @@ public class Manager {
     }
     private Runnable getCancellationRunnable(){
         return () -> {
+            boolean confirmation = false;
             Scanner scanner = new Scanner(System.in);
             while (true) {
                 while (!scanner.hasNextLine()) {}
                 String input = scanner.nextLine();
-                if (input.equals("q")) {
+                if (!confirmation && input.equals("q")) {
+                    System.out.println("Please confirm that computation should be stopped y/n");
+                    confirmation = true;
+                }else  if (confirmation && input.equals("y")) {
+                    System.out.println("Computations cancelled:");
                     System.exit(0);
+                }else if(confirmation && input.equals("n")){
+                    confirmation = false;
+                    System.out.println("Computing will continue");
                 }
             }
         };
