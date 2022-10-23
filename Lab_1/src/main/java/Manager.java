@@ -1,17 +1,18 @@
 import os.lab1.compfuncs.advanced.Concatenation;
 
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 public class Manager {
@@ -128,22 +129,45 @@ public class Manager {
         }
 
     }
+    private Runnable getConfirmationRunnable(AtomicLong start, AtomicBoolean confirmation){
+        return ()->{
+            try {
+                Thread.sleep(5000);
+                start.set(0);
+                confirmation.set(false);
+                System.out.println("Timeout: computing will continue");
+            } catch (InterruptedException ignored) {
+
+            }
+
+        };
+    }
+
     private Runnable getCancellationRunnable(){
         return () -> {
-            boolean confirmation = false;
+            AtomicBoolean confirmation = new AtomicBoolean(false);
+            AtomicLong start = new AtomicLong(0);
             Scanner scanner = new Scanner(System.in);
+            Thread confirmationThread = null;
             while (true) {
                 while (!scanner.hasNextLine()) {}
                 String input = scanner.nextLine();
-                if (!confirmation && input.equals("q")) {
-                    System.out.println("Please confirm that computation should be stopped y/n");
-                    confirmation = true;
-                }else  if (confirmation && input.equals("y")) {
+                if (!confirmation.get() && input.equals("q")) {
+                    System.out.println("Please confirm that computation should be stopped y/n:");
+                    start.set(System.currentTimeMillis());
+                    confirmation.set(true);
+                    confirmationThread = new Thread(getConfirmationRunnable(start, confirmation));
+                    confirmationThread.setDaemon(true);
+                    confirmationThread.start();
+                }else  if (confirmation.get() && input.equals("y")) {
+                    Objects.requireNonNull(confirmationThread).interrupt();
                     System.out.println("Computations cancelled:");
                     System.exit(0);
-                }else if(confirmation && input.equals("n")){
-                    confirmation = false;
+                }else if(confirmation.get() && input.equals("n")){
+                    confirmation.set(false);
+                    start.set(0);
                     System.out.println("Computing will continue");
+                    Objects.requireNonNull(confirmationThread).interrupt();
                 }
             }
         };
