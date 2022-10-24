@@ -1,3 +1,4 @@
+import org.jetbrains.annotations.NotNull;
 import os.lab1.compfuncs.advanced.Concatenation;
 
 import java.io.BufferedReader;
@@ -22,7 +23,7 @@ public class Manager {
     private TaskProcess taskG = null;
     private TaskProcess taskF = null;
     //private int x;
-
+    private final AtomicBoolean confirmation = new AtomicBoolean(false);
     public Manager() {
         //System.out.println("26");
         Function<Integer, Optional<Optional<String>>> f = (x) -> {
@@ -107,45 +108,50 @@ public class Manager {
         System.out.println("Enter x: ");
         Scanner scannerMain = new Scanner(System.in);
         final int x = scannerMain.nextInt();
-        sendX(x, clientSocketF);
-        sendX(x, clientSocketG);
+
+        System.out.println("Enter q for cancel computation\n");
+
         Thread cancel = new Thread(getCancellationRunnable());
         cancel.setDaemon(true);
         cancel.start();
+
         CompletableFuture<String> fTask = CompletableFuture.supplyAsync(() -> {
+            sendX(x, clientSocketF);
             taskF.run();
             return recvResult(clientSocketF);
         });
         CompletableFuture<String> gTask = CompletableFuture.supplyAsync(() -> {
+            sendX(x, clientSocketG);
             taskG.run();
             return recvResult(clientSocketG);
         });
 
-        CompletableFuture<String> result = fTask.thenCombine(gTask, (f , g)-> f + g);
+        CompletableFuture<String> result = fTask.thenCombine(gTask, (f , g)-> {
+            if(confirmation.get())
+                System.out.println("Overridden by system");
+           return f + g;
+        });
         try {
-            System.out.println(result.get());
+            System.out.println("\nResult:\n" + result.get() + "\n");
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
     }
-    private Runnable getConfirmationRunnable(AtomicLong start, AtomicBoolean confirmation){
+
+    private @NotNull Runnable getConfirmationRunnable(AtomicLong start, AtomicBoolean confirmation){
         return ()->{
             try {
                 Thread.sleep(5000);
                 start.set(0);
                 confirmation.set(false);
-                System.out.println("Timeout: computing will continue");
-            } catch (InterruptedException ignored) {
-
-            }
-
+                System.out.println("Action is not confirmed within 5 seconds. Computing will continue");
+            } catch (InterruptedException ignored) {}
         };
     }
 
     private Runnable getCancellationRunnable(){
         return () -> {
-            AtomicBoolean confirmation = new AtomicBoolean(false);
             AtomicLong start = new AtomicLong(0);
             Scanner scanner = new Scanner(System.in);
             Thread confirmationThread = null;
