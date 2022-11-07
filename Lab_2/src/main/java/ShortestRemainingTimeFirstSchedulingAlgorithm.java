@@ -1,14 +1,14 @@
 import java.util.*;
 
-public class SRTF {
-    private List<Process> processes;
-    private TreeSet<Process> waitingPool;
+public class ShortestRemainingTimeFirstSchedulingAlgorithm {
+    private final List<Process> processes;
+    private final TreeSet<Process> waitingPool;
     private Process currentRunningProcess;
 
     private int currentTime;
 
 
-    public SRTF() {
+    public ShortestRemainingTimeFirstSchedulingAlgorithm() {
         processes = new ArrayList<>();
         waitingPool = new TreeSet<>(Comparator.comparingInt(Process::getRemainingBurstTime));
         currentRunningProcess = null;
@@ -19,7 +19,7 @@ public class SRTF {
             processes.add(Process.createProcess(maxArrivalTime, minBurstTime, maxBurstTime));
         }
     }
-    public void createProcesses_2(){
+    public void createProcessesSecondCase(){
         processes.add(new Process(1, 2, 6));
         processes.add(new Process(2, 5, 2));
         processes.add(new Process(3, 1, 8));
@@ -34,14 +34,9 @@ public class SRTF {
         }
     }
     private boolean arrivingOfProcesses(){
-        int deleteCounter = 0;
         boolean isProcessArrived = false;
         for (int i = 0; i < processes.size();++i) {
             if (processes.get(i).getArrivalTime() == currentTime) {
-                deleteCounter++;
-                if(deleteCounter == 2){
-                    System.out.println("second delete");
-                }
                 isProcessArrived = true;
                 Process buf = processes.remove(i);
                 waitingPool.add(buf);
@@ -51,7 +46,7 @@ public class SRTF {
         }
         return isProcessArrived;
     }
-    private boolean setNewCurrentProcess(){
+    private boolean checkAndChangeCurrentProcess(){
         Process previous = currentRunningProcess;
         if (currentRunningProcess != null)
             waitingPool.add(currentRunningProcess);
@@ -64,39 +59,30 @@ public class SRTF {
     public void run() {
         currentTime = 0;
         int previousTime = 0;
-        //String previousProcessName = null;
-        boolean isNewProcess = false;
+        boolean processChanged = false;
+
         while (!waitingPool.isEmpty() || !processes.isEmpty() || currentRunningProcess != null) {
             boolean isArrived = arrivingOfProcesses();
+            if (isArrived)
+                processChanged = checkAndChangeCurrentProcess();
 
-            if (isArrived) {
-                isNewProcess = setNewCurrentProcess();
-            }
             currentTime++;
-            if(currentRunningProcess != null){
-                currentRunningProcess.run();
-            }
 
             if (currentRunningProcess != null) {
-                if (isNewProcess || isArrived || currentRunningProcess.getRemainingBurstTime() == 0){
-                    if(currentTime == 7)
-                        System.out.println();
+                currentRunningProcess.run();
+                if (processChanged || isArrived || currentRunningProcess.getRemainingBurstTime() == 0){
                     print(previousTime);
-                    if(isNewProcess)
-                        isNewProcess = false;
+                    processChanged = false;
                     previousTime = currentTime;
                 }
 
                 if (currentRunningProcess.getRemainingBurstTime() == 0){
                     System.out.println("The process " + currentRunningProcess + " finishes its execution.");
                     currentRunningProcess = null;
-                    isNewProcess = setNewCurrentProcess();
+                    processChanged = checkAndChangeCurrentProcess();
                 }
-
             }
-
         }
-
     }
     public void print(int previousTime){
         System.out.println("------------------------>");
@@ -121,9 +107,9 @@ public class SRTF {
 
     }
     public static void main(String[] args) {
-        SRTF scheduler = new SRTF();
-        //scheduler.createProcesses(5, 5, 2, 8);
-        scheduler.createProcesses_2();
+        ShortestRemainingTimeFirstSchedulingAlgorithm scheduler = new ShortestRemainingTimeFirstSchedulingAlgorithm();
+        scheduler.createProcesses(5, 5, 2, 8);
+        //scheduler.createProcesses_2();
         scheduler.printProcesses();
         scheduler.run();
     }
