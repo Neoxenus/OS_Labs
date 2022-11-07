@@ -1,19 +1,29 @@
 
 public class Process {
-    private int id;
-    private int arrivalTime;
+    private final int id;
+    private final int arrivalTime;
     private final int initialBurstTime;
     private int remainingBurstTime;
+    private int completionTime;
+
+    public int getCompletionTime() {
+        return completionTime;
+    }
+
+    public void setCompletionTime(int completionTime) {
+        this.completionTime = completionTime;
+    }
+
     private static int nextID = 0;
 
-    public Process(int id, int arrivalTime, int burstTime ) {
-        this.id = id;
+    public Process(int arrivalTime, int burstTime ) {
+        this.id = nextID++;
         this.arrivalTime = arrivalTime;
         this.initialBurstTime = burstTime;
         this.remainingBurstTime = burstTime;
     }
     public static Process createProcess(int maxArrivalTime, int minBurstTime, int maxBurstTime) {
-        return new Process(nextID++,
+        return new Process(
                 (int)(Math.random() * maxArrivalTime),
                 (int)(Math.random() * (maxBurstTime - minBurstTime) + minBurstTime));
     }
@@ -30,10 +40,9 @@ public class Process {
         return remainingBurstTime;
     }
 
-    public boolean run(){
+    public void run(){
         if(remainingBurstTime > 0)
             remainingBurstTime--;
-        return remainingBurstTime == 0;
     }
 
     @Override
