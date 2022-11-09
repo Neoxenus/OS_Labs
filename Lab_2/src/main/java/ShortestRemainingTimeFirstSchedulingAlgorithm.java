@@ -6,7 +6,6 @@ public class ShortestRemainingTimeFirstSchedulingAlgorithm {
     private final List<Process> waitingPool;
 
     private Process currentRunningProcess;
-    private int numberOfProcesses;
     private int finishedProcesses;
     private int currentTime;
 
@@ -19,7 +18,6 @@ public class ShortestRemainingTimeFirstSchedulingAlgorithm {
     }
 
     public void createProcesses(int numberOfProcesses, int maxArrivalTime, int minBurstTime,  int maxBurstTime){
-        this.numberOfProcesses = numberOfProcesses;
         for (int i = 0; i < numberOfProcesses; ++i) {
             processes.add(Process.createProcess(maxArrivalTime, minBurstTime, maxBurstTime));
         }
@@ -30,7 +28,6 @@ public class ShortestRemainingTimeFirstSchedulingAlgorithm {
         processes.add(new Process( 1, 8));
         processes.add(new Process( 0, 3));
         processes.add(new Process( 4, 4));
-        numberOfProcesses = 5;
     }
     public void printProcesses(){
         String format = "%15s %15s %15s %n";
@@ -72,7 +69,7 @@ public class ShortestRemainingTimeFirstSchedulingAlgorithm {
         currentTime = 0;
         int previousTime = 0;
         boolean processChanged = false;
-        while (finishedProcesses != numberOfProcesses) {//change+++
+        while (finishedProcesses != processes.size()) {//change+++
             boolean isArrived = arrivingOfProcesses();
             if (isArrived)
                 processChanged = checkAndChangeCurrentProcess();
@@ -135,8 +132,8 @@ public class ShortestRemainingTimeFirstSchedulingAlgorithm {
                     (e.getCompletionTime() - e.getArrivalTime()),
                     (e.getCompletionTime() - e.getArrivalTime() - e.getInitialBurstTime()) );
         }
-        System.out.println("Average turn around time = " + sumTurnAroundTime/numberOfProcesses);
-        System.out.println("Average waiting time = " + sumWaitingTime/numberOfProcesses);
+        System.out.println("Average turn around time = " + sumTurnAroundTime/processes.size());
+        System.out.println("Average waiting time = " + sumWaitingTime/processes.size());
         //System.out.printf("%40s %20s %20s  %n", "Average", sumTurnAroundTime/numberOfProcesses, sumWaitingTime/numberOfProcesses);
     }
 

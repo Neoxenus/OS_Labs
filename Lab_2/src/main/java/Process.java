@@ -14,10 +14,10 @@ public class Process {
         this.completionTime = completionTime;
     }
 
-    private static int nextID = 0;
+    private static int nextID;
 
     public Process(int arrivalTime, int burstTime ) {
-        this.id = nextID++;
+        this.id = ++nextID;
         this.arrivalTime = arrivalTime;
         this.initialBurstTime = burstTime;
         this.remainingBurstTime = burstTime;
